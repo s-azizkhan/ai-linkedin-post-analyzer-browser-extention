@@ -1,7 +1,9 @@
-// Function to add "Check Intention" button to posts
 function addIntentionButton() {
   const posts = document.querySelectorAll('div.feed-shared-update-v2');
-  if (!posts) return console.log('AZ: No posts found')
+  if (!posts) {
+    // console.log('AZ: No posts found');
+    return;
+  }
   posts.forEach(post => {
     if (!post.querySelector('.intention-button')) {
       const button = document.createElement('button');
@@ -15,12 +17,8 @@ function addIntentionButton() {
       button.style.borderRadius = '4px';
       button.style.cursor = 'pointer';
 
-
-      console.log('AZ: Button created');
+      // console.log('AZ: Button created');
       const cleanedText = getPostText(post);
-      // console.log(cleanedText);
-
-      // add text to the button custom attribute
       button.setAttribute('post-text', cleanedText);
 
       button.addEventListener('click', () => analyzePost(post));
@@ -29,41 +27,18 @@ function addIntentionButton() {
       if (actionsContainer) {
         actionsContainer.appendChild(button);
       } else {
-        console.log('AZ: No actions container found for post');
+        // console.log('AZ: No actions container found for post');
         post.appendChild(button);
       }
-    } else {
-      // console.log('Intention button already exists for post');
     }
   });
 }
 
-// Function to extract post text
 function getPostText(post) {
   const cleanedText = post.querySelector('div.update-components-text')?.textContent.trim()?.replaceAll("hashtag#", "#");
-  return cleanedText;
+  return cleanedText || '';
 }
 
-function extractHashtags(text) {
-  // Use a regular expression to match hashtags starting with "hashtag#"
-  const hashtagPattern = /hashtag#\w+/g;
-  const hashtags = text.match(hashtagPattern);
-
-  // then remove hashtag# from the hashtags
-  hashtags.forEach((hashtag, index) => {
-    hashtags[index] = hashtag.replace('hashtag#', '');
-  });
-
-  // Remove the matched hashtags from the original text
-  const textWithoutHashtags = text.replace(hashtagPattern, '').trim();
-
-  return {
-    textWithoutHashtags,
-    hashtags
-  };
-}
-
-// Function to analyze post
 async function analyzePost(post) {
   const postText = getPostText(post);
   if (!postText) {
@@ -71,68 +46,36 @@ async function analyzePost(post) {
     return;
   }
 
-  alert(postText);
+  const intentionButton = post.querySelector('.intention-button');
+  intentionButton.disabled = true;
+  intentionButton.textContent = 'Analyzing...';
 
-  // const { textWithoutHashtags, hashtags } = extractHashtags(postText);
-  // alert(textWithoutHashtags);
-  // alert(hashtags);
-
-  // Send message to background script for analysis
   chrome.runtime.sendMessage({
     action: 'analyzePost',
     text: postText
   }, response => {
     if (response.error) {
       alert('Error analyzing post: ' + response.error);
+      intentionButton.disabled = false;
+      intentionButton.textContent = 'Check Intention';
       return;
     }
 
-    // Display results
     showResultsAlert(post, response.results);
+    intentionButton.disabled = false;
+    intentionButton.textContent = 'Check Intention';
   });
 }
 
-// Function to display analysis results
 function showResultsAlert(post, results) {
   let message = 'Intention Analysis:\n';
-  for (const [intention, score] of Object.entries(results.intentions)) {
-    message += `${intention}: ${(score * 100).toFixed(0)}%\n`;
-  }
+  results.intentions.forEach(({ intention, confidence }) => {
+    message += `${intention}: ${(confidence * 100).toFixed(0)}%\n`;
+  });
+  message += `Reason: ${results.reason}\n`;
   message += `AI-Generated: ${results.isAIGenerated ? 'Yes' : 'No'}`;
 
   alert(message);
-  return;
-}
-
-// Function to display analysis results
-function showResults(post, results) {
-  // Remove existing results if any
-  const existingResults = post.querySelector('.intention-results');
-  if (existingResults) {
-    existingResults.remove();
-  }
-
-  const resultsDiv = document.createElement('div');
-  resultsDiv.className = 'intention-results';
-  resultsDiv.style.margin = '10px';
-  resultsDiv.style.padding = '10px';
-  resultsDiv.style.backgroundColor = '#f3f2f1';
-  resultsDiv.style.borderRadius = '4px';
-
-  let html = '<h3>Intention Analysis:</h3><ul>';
-  for (const [intention, score] of Object.entries(results.intentions)) {
-
-    html += `<li>${intention}: ${(score * 100).toFixed(0)}%</li>`;
-  }
-  html += '</ul>';
-  html += `<p>AI-Generated: ${results.isAIGenerated ? 'Yes' : 'No'}</p>`;
-
-  resultsDiv.innerHTML = html;
-
-  const actionsContainer = post.querySelector('div.feed-shared-social-action-bar');
-  if (actionsContainer) {
-    actionsContainer.appendChild(resultsDiv);
-  }
 }
 
 // Observe DOM changes to handle dynamic content

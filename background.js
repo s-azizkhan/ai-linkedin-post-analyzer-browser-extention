@@ -10,8 +10,8 @@ const AI_CONFIG = {
     top_p: 1,
     base_url: "http://127.0.0.1:11434",
     api_key: "ollama",
-    system_prompt: "You are an AI assistant that analyzes LinkedIn posts to identify user intentions, returning results according to the provided schema. Output an array of intentions (e.g., professionalUpdates, networking, etc.) with confidence scores (0 to 1), a boolean indicating if the post is AI-generated, and a reason for the analysis..",
-    full_url: "http://127.0.0.1:11434/api/generate"
+    system_prompt: "You are an AI assistant by 'Aziz' that analyzes LinkedIn posts to identify user intentions, returning results according to the provided schema. Output an array of intentions (e.g., professionalUpdates, networking, etc.) with confidence scores (0 to 1), a boolean indicating if the post is AI-generated, and a reason for the analysis.",
+    full_url: "http://127.0.0.1:11434/api/chat"
 };
 
 // Function to analyze text using Ollama API
@@ -107,48 +107,64 @@ async function analyzeText(text) {
         additionalProperties: false
     };
 
-    const response = await fetch(AI_CONFIG.full_url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${AI_CONFIG.api_key}`
+    const messages = [
+        {
+            "role": "system",
+            "content": AI_CONFIG.system_prompt
         },
-        body: JSON.stringify({
-            model: AI_CONFIG.model,
-            prompt: text,
-            system: AI_CONFIG.system_prompt,
-            format: resultSchemaV2,
-            stream: false
-        })
-    });
+        {
+            "role": "user",
+            "content": text
+        }
+    ];
 
+    // console.log("AZ: AI_CONFIG:", AI_CONFIG);
 
-    // console.log("AZ: API response:", response);
-    if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+    try {
+        const response = await fetch(AI_CONFIG.full_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AI_CONFIG.api_key}`
+            },
+            body: JSON.stringify({
+                messages,
+                model: AI_CONFIG.model,
+                format: resultSchemaV2,
+                stream: false
+            })
+        });
+
+        // console.log("AZ: API response:", response);
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const resp = JSON.parse(data.message.content);
+        // console.log("API response:", resp);
+
+        // const { advertisement, teaching, networking, selfPromotion } = resp.intentions;
+        const intentions = resp.intentions;
+        // convert the resp.intention to capitalized & sapced string (selfPromotion -> Self Promotion)
+        for (let i = 0; i < intentions.length; i++) {
+            intentions[i].intention = intentions[i].intention.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
+        }
+
+        // Assuming the API response structure
+        const result = {
+            intentions,
+            reason: resp.reason,
+            isAIGenerated: resp.isAIGenerated
+        };
+
+        // console.log("Analysis result:", result);
+        return result;
+    } catch (error) {
+        console.error("Error analyzing text:", error);
+        sendResponse({ error: error.message });
     }
-
-    const data = await response.json();
-
-    const resp = JSON.parse(data.response);
-    // console.log("API response:", resp);
-
-    // const { advertisement, teaching, networking, selfPromotion } = resp.intentions;
-    const intentions = resp.intentions;
-    // convert the resp.intention to capitalized & sapced string (selfPromotion -> Self Promotion)
-    for (let i = 0; i < intentions.length; i++) {
-        intentions[i].intention = intentions[i].intention.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
-    }
-
-    // Assuming the API response structure
-    const result = {
-        intentions,
-        reason: resp.reason,
-        isAIGenerated: resp.isAIGenerated
-    };
-
-    // console.log("Analysis result:", result);
-    return result;
 }
 
 // Handle messages from content script

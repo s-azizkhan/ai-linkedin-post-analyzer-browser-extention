@@ -11,13 +11,27 @@ function addIntentionButton() {
       button.textContent = 'Check Intention';
       button.style.margin = '10px';
       button.style.padding = '5px 10px';
-      button.style.backgroundColor = '#030505';
-      button.style.color = 'white';
+      button.style.backgroundColor = '#1a1a1a';
+      button.style.color = '#ffffff';
       button.style.border = 'none';
       button.style.borderRadius = '4px';
+      button.style.fontSize = '1.2rem';
       button.style.cursor = 'pointer';
+      button.style.display = 'flex';
+      button.style.alignItems = 'center';
+      button.style.justifyContent = 'center';
+      button.style.transition = 'all 0.2s ease';
 
-      // console.log('AZ: Button created');
+      button.addEventListener('mouseenter', () => {
+        button.style.backgroundColor = '#333333';
+        button.style.transform = 'translateY(-1px)';
+      });
+
+      button.addEventListener('mouseleave', () => {
+        button.style.backgroundColor = '#1a1a1a';
+        button.style.transform = 'translateY(0)';
+      });
+
       const cleanedText = getPostText(post);
       button.setAttribute('post-text', cleanedText);
 
@@ -27,11 +41,11 @@ function addIntentionButton() {
       if (actionsContainer) {
         actionsContainer.appendChild(button);
       } else {
-        // console.log('AZ: No actions container found for post');
         post.appendChild(button);
       }
     }
   });
+
 }
 
 function getPostText(post) {
@@ -40,31 +54,38 @@ function getPostText(post) {
 }
 
 async function analyzePost(post) {
-  const postText = getPostText(post);
-  if (!postText) {
-    alert('No text found in post');
-    return;
-  }
-
   const intentionButton = post.querySelector('.intention-button');
-  intentionButton.disabled = true;
-  intentionButton.textContent = 'Analyzing...';
-
-  chrome.runtime.sendMessage({
-    action: 'analyzePost',
-    text: postText
-  }, response => {
-    if (response.error) {
-      alert('Error analyzing post: ' + response.error);
-      intentionButton.disabled = false;
-      intentionButton.textContent = 'Check Intention';
+  try {
+    const postText = getPostText(post);
+    if (!postText) {
+      alert('No text found in post');
       return;
     }
 
-    showResultsAlert(post, response.results);
+    intentionButton.disabled = true;
+    intentionButton.textContent = 'Analyzing...';
+
+    chrome.runtime.sendMessage({
+      action: 'analyzePost',
+      text: postText
+    }, response => {
+      if (response.error) {
+        alert('Error analyzing post: ' + response.error);
+        intentionButton.disabled = false;
+        intentionButton.textContent = 'Check Intention';
+        return;
+      }
+
+      showResultsAlert(post, response.results);
+      intentionButton.disabled = false;
+      intentionButton.textContent = 'Check Intention';
+    });
+  } catch (error) {
+    console.error('Error analyzing post:', error);
+    alert(`Error analyzing post: ${error.message}`);
     intentionButton.disabled = false;
     intentionButton.textContent = 'Check Intention';
-  });
+  }
 }
 
 function showResultsAlert(post, results) {

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LinkedIn Post Intention Analyzer Options</title>
+    <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+
+<body>
+    <h2>LinkedIn Intention Analyzer AI Configuration</h2>
+
+    <label for="provider">AI Provider:</label>
+    <select id="provider">
+        <option value="ollama">Ollama</option>
+        <option value="gemini">Gemini</option>
+        <!-- <option value="openai">OpenAI</option>
+        <option value="groq">Groq</option> -->
+        <!-- Add other providers as needed -->
+    </select>
+
+    <label for="model">Model Name:</label>
+    <input type="text" id="model" placeholder="e.g., llama3, gpt-4, gemini-pro">
+
+    <label for="apiKey">API Key:</label>
+    <input type="password" id="apiKey" placeholder="Enter your API Key">
+
+    <label for="baseUrl">Base URL (Optional):</label>
+    <input type="text" id="baseUrl" placeholder="e.g., http://localhost:11434 for Ollama">
+
+    <button id="save">Save Settings</button>
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+    <div class="creator-credit">
+        <a href="https://justaziz.com?ref=lpx" target="_blank">
+            by Aziz
+        </a>
+    </div>
+</body>
+
+</html>

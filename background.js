@@ -288,30 +288,29 @@ chrome.runtime.onInstalled.addListener(() => {
   // console.log("AZ: LinkedIn Intention Analyzer installed");
 });
 
-// replace with your AI config
-const AI_PROVIDERS = {
-  GROQ: "groq",
-  OPENAI: "openai",
-  OLLAMA: "ollama",
-  GEMINI: "gemini",
-};
-const AI_CONFIG = {
-  provider: AI_PROVIDERS.OLLAMA,
-  model: "granite3.3:2b",
-  // model: "gemini-2.0-flash-lite",
-  temperature: 0.5,
-  max_tokens: 150,
-  top_p: 1,
-  base_url: "http://127.0.0.1:11434",
-  api_key: "REPLACE_API_KEY_HERE",
-  system_prompt:
-    "You are an AI assistant by 'Aziz' that analyzes LinkedIn posts to identify user intentions, returning results according to the provided schema. Output an array of intentions (e.g., professionalUpdates, networking, etc.) with confidence scores (0 to 1), also indicate if the post is AI-generated, and a reason for the analysis",
-  full_url: "http://127.0.0.1:11434/api/chat",
-};
+// Default system prompt if not found in storage
+const DEFAULT_SYSTEM_PROMPT = "You are an AI assistant by 'Aziz' that analyzes LinkedIn posts to identify user intentions, returning results according to the provided schema. Output an array of intentions (e.g., professionalUpdates, networking, etc.) with confidence scores (0 to 1), also indicate if the post is AI-generated, and a reason for the analysis";
 
-// Function to analyze text using Ollama API
+// Function to get AI config from storage
+async function getAIConfig() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(['aiConfig'], (result) => {
+      if (chrome.runtime.lastError) {
+        return reject(chrome.runtime.lastError);
+      }
+      if (!result.aiConfig || !result.aiConfig.provider || !result.aiConfig.model || !result.aiConfig.apiKey) {
+        return reject(new Error('AI configuration not found or incomplete. Please configure the extension options.'));
+      }
+      resolve(result.aiConfig);
+    });
+  });
+}
+
+// Function to analyze text using the configured AI provider
 async function analyzeText(text) {
   // console.log("Analyzing text:", text);
+
+  const aiConfig = await getAIConfig(); // Get config from storage
 
   const resultSchemaV2 = {
     type: "object",
@@ -364,7 +363,7 @@ async function analyzeText(text) {
   const messages = [
     {
       role: "system",
-      content: AI_CONFIG.system_prompt,
+      content: DEFAULT_SYSTEM_PROMPT,
     },
     {
       role: "user",
@@ -372,27 +371,21 @@ async function analyzeText(text) {
     },
   ];
 
-  // console.log("AZ: AI_CONFIG:", AI_CONFIG);
+  // console.log("AZ: Using AI Config:", aiConfig);
 
   try {
     const body = {
-      provider: AI_CONFIG.provider,
+      provider: aiConfig.provider,
       messages,
-      modelId: AI_CONFIG.model,
+      modelId: aiConfig.model,
       responseType: "json",
       responseSchema: resultSchemaV2,
       stream: false,
-      apiKey: AI_CONFIG.api_key,
+      apiKey: aiConfig.apiKey, // Use API key from storage
+      customUrl: aiConfig.baseUrl // Use custom URL if provided
     };
 
-    if (AI_CONFIG.provider === AI_PROVIDERS.GROQ) {
-      delete body.format;
-      // body.response_format = {
-      //   type: "json_object",
-      // };
-
-      messages[0].content = `${AI_CONFIG.system_prompt} with very crisp and short response(with in 1-2 sentences).`;
-    }
+    // Provider specific adjustments (keep if needed, adapt based on stored provider)
 
     const aiClient = new AIClient();
     const data = await aiClient.chat(body);
@@ -415,7 +408,7 @@ async function analyzeText(text) {
       intentions,
       reason: resp.reason,
       isAIGenerated: resp.isAIGenerated,
-      provider: AI_CONFIG.provider,
+      provider: aiConfig.provider, // Reflect the provider used
     };
 
     // console.log("Analysis result:", result);

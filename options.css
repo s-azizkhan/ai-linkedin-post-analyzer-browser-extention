@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    padding: 10px 30px;
+    min-width: 300px;
+    background-color: #ffffff; /* White background */
+    color: #000000; /* Black text */
+    border-radius: 18px; /* Remove border radius for a sharper look */
+    box-shadow: none; /* Remove shadow */
+    border: 1px solid #e0e0e0; /* Light grey border */
+    overflow: hidden;
+}
+
+h2 {
+    text-align: center;
+    color: #000000; /* Black heading */
+    margin-bottom: 25px;
+    font-weight: 700; /* Bolder font */
+    letter-spacing: 0.5px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 400;
+    color: #333333; /* Dark grey label text */
+    font-size: 0.9em;
+}
+
+input[type="text"],
+input[type="password"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #cccccc; /* Grey border */
+    border-radius: 4px; /* Slightly rounded corners */
+    box-sizing: border-box;
+    background-color: #f9f9f9; /* Very light grey background */
+    color: #000000; /* Black text */
+    font-family: inherit;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus {
+    background-color: #ffffff; /* White background on focus */
+    outline: none;
+    border-color: #000000; /* Black border on focus */
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1); /* Subtle black shadow */
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+button {
+    padding: 12px 20px;
+    background-color: #000000; /* Black button */
+    color: #ffffff; /* White text */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: none; /* Remove shadow */
+}
+
+button:hover {
+    border-radius: 16px;
+    background-color: #333333; /* Darker grey on hover */
+    transform: translateY(-1px);
+}
+
+button:active {
+    background-color: #1a1a1a; /* Even darker grey on active */
+    transform: translateY(0);
+}
+
+#status {
+    margin-top: 20px;
+    color: #000000;
+    font-weight: 400;
+    text-align: center;
+    min-height: 1.2em;
+    transition: opacity 0.5s ease;
+}
+
+.creator-credit {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.8em;
+    color: #888888; /* Medium grey credit text */
+}
+
+.creator-credit a {
+    color: #555555; /* Darker grey link */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.creator-credit a:hover {
+    color: #000000; /* Black link on hover */
+    text-decoration: underline;
+}
